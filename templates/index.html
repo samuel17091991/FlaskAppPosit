@@ -402,26 +402,20 @@
             afterChange: function(changes, source) {
                 if (!changes || source === 'loadData' || source === 'internal') return;
 
-                const DROPDOWN_FIELDS = ['primary_node_yn', 'active_yn'];
-                const dropdownRows = new Set();
-
                 for (const [row, prop, oldVal, newVal] of changes) {
                     if (oldVal === newVal) continue;
                     const physRow = hot.toPhysicalRow(row);
                     const rowData = hot.getSourceDataAtRow(physRow);
                     if (!newRows.has(rowData)) {
                         unsavedRows.add(rowData);
-                    }
-                    if (DROPDOWN_FIELDS.includes(prop)) {
-                        dropdownRows.add(physRow);
+                        // Auto-save existing rows after a short delay
+                        clearTimeout(saveTimers[physRow]);
+                        saveTimers[physRow] = setTimeout(function() {
+                            saveRow(physRow);
+                        }, 500);
                     }
                 }
                 hot.render();
-
-                // Auto-save dropdown changes immediately
-                dropdownRows.forEach(function(physRow) {
-                    saveRow(physRow);
-                });
             },
             beforeKeyDown: function(event) {
                 if (event.key !== 'Enter') return;
