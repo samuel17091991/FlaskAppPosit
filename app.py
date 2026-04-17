@@ -31,6 +31,17 @@ app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key-change-in-prod")
 app.wsgi_app = PrefixMiddleware(app.wsgi_app)
 enforce_access(app)
 
+
+# TEMPORARY DEBUG — remove after fixing the URL issue
+@app.before_request
+def debug_request():
+    print(f"[DEBUG] PATH_INFO: {request.environ.get('PATH_INFO')}")
+    print(f"[DEBUG] SCRIPT_NAME: {request.environ.get('SCRIPT_NAME')}")
+    print(f"[DEBUG] REQUEST_URI: {request.environ.get('REQUEST_URI')}")
+    print(f"[DEBUG] HTTP_HOST: {request.environ.get('HTTP_HOST')}")
+    print(f"[DEBUG] OS SCRIPT_NAME: {os.environ.get('SCRIPT_NAME')}")
+    print(f"[DEBUG] Full URL: {request.url}")
+
 DB_CONFIG = {
     "host": os.getenv("DB_HOST"),
     "database": os.getenv("DB_NAME"),
