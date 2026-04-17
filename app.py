@@ -26,7 +26,9 @@ class PrefixMiddleware:
         return self.wsgi_app(environ, start_response)
 
 
-app = Flask(__name__)
+_base_dir = os.path.dirname(os.path.abspath(__file__))
+
+app = Flask(__name__, template_folder=os.path.join(_base_dir, 'templates'))
 app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key-change-in-prod")
 app.wsgi_app = PrefixMiddleware(app.wsgi_app)
 enforce_access(app)
