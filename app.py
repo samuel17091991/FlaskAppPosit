@@ -4,16 +4,31 @@ import json
 import datetime
 from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
-from werkzeug.middleware.proxy_fix import ProxyFix
 from ad_access import enforce_access
 import psycopg2
 import psycopg2.extras
 
 load_dotenv()
 
+
+class PrefixMiddleware:
+    """Handle Posit Connect URL prefix so Flask can match routes."""
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+
+    def __call__(self, environ, start_response):
+        prefix = environ.get('SCRIPT_NAME', '') or os.environ.get('SCRIPT_NAME', '')
+        if prefix and prefix != '/':
+            environ['SCRIPT_NAME'] = prefix
+            path_info = environ.get('PATH_INFO', '')
+            if path_info.startswith(prefix):
+                environ['PATH_INFO'] = path_info[len(prefix):] or '/'
+        return self.wsgi_app(environ, start_response)
+
+
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key-change-in-prod")
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+app.wsgi_app = PrefixMiddleware(app.wsgi_app)
 enforce_access(app)
 
 DB_CONFIG = {
