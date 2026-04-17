@@ -1,6 +1,7 @@
 import os
 import uuid
 import json
+import re
 import datetime
 from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
@@ -12,17 +13,16 @@ load_dotenv()
 
 
 class PrefixMiddleware:
-    """Handle Posit Connect URL prefix so Flask can match routes."""
+    """Strip /content/<guid> prefix that Posit Connect adds to PATH_INFO."""
     def __init__(self, wsgi_app):
         self.wsgi_app = wsgi_app
 
     def __call__(self, environ, start_response):
-        prefix = environ.get('SCRIPT_NAME', '') or os.environ.get('SCRIPT_NAME', '')
-        if prefix and prefix != '/':
-            environ['SCRIPT_NAME'] = prefix
-            path_info = environ.get('PATH_INFO', '')
-            if path_info.startswith(prefix):
-                environ['PATH_INFO'] = path_info[len(prefix):] or '/'
+        path_info = environ.get('PATH_INFO', '')
+        match = re.match(r'(/content/[^/]+)(.*)', path_info)
+        if match:
+            environ['SCRIPT_NAME'] = match.group(1)
+            environ['PATH_INFO'] = match.group(2) or '/'
         return self.wsgi_app(environ, start_response)
 
 
@@ -30,17 +30,6 @@ app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key-change-in-prod")
 app.wsgi_app = PrefixMiddleware(app.wsgi_app)
 enforce_access(app)
-
-
-# TEMPORARY DEBUG — remove after fixing the URL issue
-@app.before_request
-def debug_request():
-    print(f"[DEBUG] PATH_INFO: {request.environ.get('PATH_INFO')}")
-    print(f"[DEBUG] SCRIPT_NAME: {request.environ.get('SCRIPT_NAME')}")
-    print(f"[DEBUG] REQUEST_URI: {request.environ.get('REQUEST_URI')}")
-    print(f"[DEBUG] HTTP_HOST: {request.environ.get('HTTP_HOST')}")
-    print(f"[DEBUG] OS SCRIPT_NAME: {os.environ.get('SCRIPT_NAME')}")
-    print(f"[DEBUG] Full URL: {request.url}")
 
 DB_CONFIG = {
     "host": os.getenv("DB_HOST"),
