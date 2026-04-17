@@ -21,10 +21,10 @@
       "checksum": "f97efd15cd5805480f6131b9894fe1da"
     },
     "app.py": {
-      "checksum": "606e2b5cd956a9e9d6cc2d539264a67b"
+      "checksum": "1303dc77b4d95e74699f1a659062c152"
     },
     "templates/index.html": {
-      "checksum": "afb72568e2ef5e81d5222385241a9de2"
+      "checksum": "2cdff50aa1ee3c1fa3294db8d879f49e"
     }
   }
 }
